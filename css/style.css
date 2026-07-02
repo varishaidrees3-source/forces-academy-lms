@@ -1,0 +1,63 @@
+/* Forces Academy LMS — Custom Styles */
+
+body {
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.auth-card {
+    background: #ffffff;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 480px;
+}
+
+.auth-card h2 {
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+}
+
+.auth-card .subtitle {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+.btn-primary {
+    background-color: #2c5364;
+    border-color: #2c5364;
+}
+
+.btn-primary:hover {
+    background-color: #203a43;
+    border-color: #203a43;
+}
+
+.auth-card a {
+    color: #2c5364;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.auth-card a:hover {
+    text-decoration: underline;
+}
+
+.dashboard-wrapper {
+    max-width: 900px;
+    margin: 3rem auto;
+    padding: 0 1.5rem;
+}
+
+.welcome-banner {
+    background: #2c5364;
+    color: #fff;
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+}
