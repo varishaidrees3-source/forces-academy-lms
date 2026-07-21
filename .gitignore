@@ -1,3 +1,4 @@
 config/db.php
 uploads/*
 !.gitkeep
+admin/create_admin.php
