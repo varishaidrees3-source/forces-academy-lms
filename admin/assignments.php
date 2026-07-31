@@ -2,19 +2,34 @@
 require_once 'includes/admin_auth.php';
 require_once '../config/db.php';
 
+$editAssignment = null;
+
+// Handle Add / Update submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $title       = trim($_POST['title'] ?? '');
-    $description = trim($_POST['description'] ?? '');
-    $course_id   = intval($_POST['course_id'] ?? 0);
-    $due_date    = $_POST['due_date'] ?? '';
+    $title          = trim($_POST['title'] ?? '');
+    $description    = trim($_POST['description'] ?? '');
+    $course_id      = intval($_POST['course_id'] ?? 0);
+    $due_date       = $_POST['due_date'] ?? '';
+    $assignment_id  = intval($_POST['assignment_id'] ?? 0);
 
     if ($title !== '' && $course_id > 0 && $due_date !== '') {
-        $stmt = mysqli_prepare($conn,
-            "INSERT INTO assignments (title, description, course_id, due_date) VALUES (?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'ssis', $title, $description, $course_id, $due_date);
-        mysqli_stmt_execute($stmt);
-        header('Location: assignments.php?added=1');
-        exit;
+        if ($assignment_id > 0) {
+            // Update existing assignment
+            $stmt = mysqli_prepare($conn,
+                "UPDATE assignments SET title = ?, description = ?, course_id = ?, due_date = ? WHERE id = ?");
+            mysqli_stmt_bind_param($stmt, 'ssisi', $title, $description, $course_id, $due_date, $assignment_id);
+            mysqli_stmt_execute($stmt);
+            header('Location: assignments.php?updated=1');
+            exit;
+        } else {
+            // Insert new assignment
+            $stmt = mysqli_prepare($conn,
+                "INSERT INTO assignments (title, description, course_id, due_date) VALUES (?, ?, ?, ?)");
+            mysqli_stmt_bind_param($stmt, 'ssis', $title, $description, $course_id, $due_date);
+            mysqli_stmt_execute($stmt);
+            header('Location: assignments.php?added=1');
+            exit;
+        }
     }
 }
 
@@ -25,6 +40,15 @@ if (isset($_GET['delete'])) {
     mysqli_stmt_execute($stmt);
     header('Location: assignments.php?deleted=1');
     exit;
+}
+
+// Load assignment into form for editing
+if (isset($_GET['edit'])) {
+    $editId = intval($_GET['edit']);
+    $stmt = mysqli_prepare($conn, "SELECT * FROM assignments WHERE id = ?");
+    mysqli_stmt_bind_param($stmt, 'i', $editId);
+    mysqli_stmt_execute($stmt);
+    $editAssignment = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 }
 
 $courses = mysqli_query($conn, "SELECT id, course_name FROM courses ORDER BY course_name");
@@ -50,38 +74,53 @@ $activePage = 'assignments';
 
         <?php if (isset($_GET['added'])): ?>
             <div class="alert alert-success">Assignment added successfully.</div>
+        <?php elseif (isset($_GET['updated'])): ?>
+            <div class="alert alert-success">Assignment updated successfully.</div>
         <?php elseif (isset($_GET['deleted'])): ?>
             <div class="alert alert-success">Assignment deleted successfully.</div>
         <?php endif; ?>
 
         <div class="card mb-4">
             <div class="card-body">
-                <h5 class="card-title">Add New Assignment</h5>
+                <h5 class="card-title"><?= $editAssignment ? 'Edit Assignment' : 'Add New Assignment' ?></h5>
                 <form method="POST" action="assignments.php">
+                    <input type="hidden" name="assignment_id" value="<?= $editAssignment['id'] ?? '' ?>">
                     <div class="row g-3">
                         <div class="col-md-6">
                             <label class="form-label">Title</label>
-                            <input type="text" name="title" class="form-control" required>
+                            <input type="text" name="title" class="form-control"
+                                   value="<?= htmlspecialchars($editAssignment['title'] ?? '') ?>" required>
                         </div>
                         <div class="col-md-6">
                             <label class="form-label">Course</label>
                             <select name="course_id" class="form-select" required>
                                 <option value="">Select course</option>
-                                <?php while ($c = mysqli_fetch_assoc($courses)): ?>
-                                    <option value="<?= $c['id'] ?>"><?= htmlspecialchars($c['course_name']) ?></option>
+                                <?php
+                                mysqli_data_seek($courses, 0);
+                                while ($c = mysqli_fetch_assoc($courses)): ?>
+                                    <option value="<?= $c['id'] ?>"
+                                        <?= (isset($editAssignment['course_id']) && $editAssignment['course_id'] == $c['id']) ? 'selected' : '' ?>>
+                                        <?= htmlspecialchars($c['course_name']) ?>
+                                    </option>
                                 <?php endwhile; ?>
                             </select>
                         </div>
                         <div class="col-md-8">
                             <label class="form-label">Description</label>
-                            <textarea name="description" class="form-control" rows="2"></textarea>
+                            <textarea name="description" class="form-control" rows="2"><?= htmlspecialchars($editAssignment['description'] ?? '') ?></textarea>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Due Date</label>
-                            <input type="date" name="due_date" class="form-control" required>
+                            <input type="date" name="due_date" class="form-control"
+                                   value="<?= htmlspecialchars($editAssignment['due_date'] ?? '') ?>" required>
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary mt-3">Add Assignment</button>
+                    <button type="submit" class="btn btn-primary mt-3">
+                        <?= $editAssignment ? 'Update Assignment' : 'Add Assignment' ?>
+                    </button>
+                    <?php if ($editAssignment): ?>
+                        <a href="assignments.php" class="btn btn-secondary mt-3">Cancel</a>
+                    <?php endif; ?>
                 </form>
             </div>
         </div>
@@ -98,6 +137,7 @@ $activePage = 'assignments';
                             <td><?= htmlspecialchars($a['course_name'] ?? 'N/A') ?></td>
                             <td><?= date('d M Y', strtotime($a['due_date'])) ?></td>
                             <td>
+                                <a href="assignments.php?edit=<?= $a['id'] ?>" class="btn btn-sm btn-outline-primary">Edit</a>
                                 <a href="assignments.php?delete=<?= $a['id'] ?>"
                                    class="btn btn-sm btn-outline-danger"
                                    onclick="return confirm('Delete this assignment?');">Delete</a>
