@@ -13,50 +13,142 @@ $stmt = $conn->prepare("SELECT * FROM results WHERE student_id = ?");
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $results = $stmt->get_result();
+
+// Pull rows into an array once so we can also compute quick stats
+$rows = $results->fetch_all(MYSQLI_ASSOC);
+$totalExams = count($rows);
+$avgPercent = 0;
+if ($totalExams > 0) {
+    $sumPercent = 0;
+    foreach ($rows as $r) {
+        if ($r['total_marks'] > 0) {
+            $sumPercent += ($r['marks'] / $r['total_marks']) * 100;
+        }
+    }
+    $avgPercent = round($sumPercent / $totalExams, 1);
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>My Results</title>
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Results — Forces Academy LMS</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+<link href="css/style.css" rel="stylesheet">
 </head>
-<body class="bg-light">
-<div class="container py-5">
-    <h2 class="mb-4">📊 My Results</h2>
+<body class="dashboard-body">
 
-    <div class="table-responsive">
-        <table class="table table-striped table-bordered bg-white">
-            <thead class="table-dark">
-                <tr>
-                    <th>Subject</th>
-                    <th>Marks Obtained</th>
-                    <th>Total Marks</th>
-                    <th>Grade</th>
-                    <th>Exam Type</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if ($results->num_rows > 0): ?>
-                    <?php while ($row = $results->fetch_assoc()): ?>
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-brand">
+        <i class="bi bi-mortarboard-fill"></i>
+        <span>Forces Academy</span>
+    </div>
+    <nav class="sidebar-nav">
+        <a href="dashboard.php" class="nav-link">
+            <i class="bi bi-speedometer2"></i> Dashboard
+        </a>
+        <a href="courses.php" class="nav-link">
+            <i class="bi bi-book"></i> My Courses
+        </a>
+        <a href="assignments.php" class="nav-link">
+            <i class="bi bi-clipboard-check"></i> Assignments
+        </a>
+        <a href="results.php" class="nav-link active">
+            <i class="bi bi-bar-chart"></i> My Results
+        </a>
+        <a href="notices.php" class="nav-link">
+            <i class="bi bi-bell"></i> Notices
+        </a>
+        <a href="logout.php" class="nav-link logout-link">
+            <i class="bi bi-box-arrow-right"></i> Logout
+        </a>
+    </nav>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
+        <button class="btn" id="sidebarToggle">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+        <span class="navbar-brand mb-0 h5">My Results</span>
+    </nav>
+
+    <div class="content-wrapper">
+        <h4 class="fw-bold mb-4">📊 My Results</h4>
+
+        <!-- Quick stats -->
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-primary-soft"><i class="bi bi-journal-check"></i></div>
+                    <div>
+                        <div class="stat-number"><?= $totalExams ?></div>
+                        <div class="stat-label">Exams Recorded</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card">
+                    <div class="stat-icon bg-success-soft"><i class="bi bi-graph-up-arrow"></i></div>
+                    <div>
+                        <div class="stat-number"><?= $avgPercent ?>%</div>
+                        <div class="stat-label">Average Score</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <?php if ($totalExams === 0): ?>
+            <div class="text-center py-5">
+                <i class="bi bi-bar-chart fs-1 text-muted"></i>
+                <p class="mt-3 text-muted">No results available yet.</p>
+            </div>
+        <?php else: ?>
+        <div class="table-responsive" style="border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+            <table class="table table-striped table-hover align-middle bg-white mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Subject</th>
+                        <th>Marks Obtained</th>
+                        <th>Total Marks</th>
+                        <th>Percentage</th>
+                        <th>Grade</th>
+                        <th>Exam Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($rows as $row):
+                        $pct = $row['total_marks'] > 0 ? round(($row['marks'] / $row['total_marks']) * 100, 1) : 0;
+                    ?>
                         <tr>
-                            <td><?= htmlspecialchars($row['subject']) ?></td>
+                            <td class="fw-semibold"><?= htmlspecialchars($row['subject']) ?></td>
                             <td><?= htmlspecialchars($row['marks']) ?></td>
                             <td><?= htmlspecialchars($row['total_marks']) ?></td>
+                            <td><?= $pct ?>%</td>
                             <td>
-                                <span class="badge bg-<?= $row['grade'] === 'A+' || $row['grade'] === 'A' ? 'success' : ($row['grade'] === 'F' ? 'danger' : 'warning') ?>">
+                                <span class="badge bg-<?= $row['grade'] === 'A+' || $row['grade'] === 'A' ? 'success' : ($row['grade'] === 'F' ? 'danger' : 'warning text-dark') ?>">
                                     <?= htmlspecialchars($row['grade']) ?>
                                 </span>
                             </td>
                             <td><?= htmlspecialchars($row['exam_type']) ?></td>
                         </tr>
-                    <?php endwhile; ?>
-                <?php else: ?>
-                    <tr><td colspan="5" class="text-center">No results available yet.</td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        </div>
+        <?php endif; ?>
     </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.getElementById('sidebarToggle').addEventListener('click', function() {
+    document.getElementById('sidebar').classList.toggle('show');
+});
+</script>
 </body>
 </html>
