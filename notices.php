@@ -42,6 +42,12 @@ $notices_result = mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at
         <a href="notices.php" class="nav-link active">
             <i class="bi bi-bell"></i> Notices
         </a>
+        <a href="timetable.php" class="nav-link">
+            <i class="bi bi-calendar-week"></i> Timetable
+        </a>
+        <a href="profile.php" class="nav-link">
+            <i class="bi bi-person-circle"></i> My Profile
+        </a>
         <a href="logout.php" class="nav-link logout-link">
             <i class="bi bi-box-arrow-right"></i> Logout
         </a>
