@@ -18,6 +18,7 @@ function navLink($page, $label, $href, $active) {
             navLink('assignments', 'Manage Assignments', 'assignments.php', $activePage);
             navLink('results', 'Upload Results', 'results.php', $activePage);
             navLink('notices', 'Post Notice', 'notices.php', $activePage);
+            navLink('timetable', 'Manage Timetable', 'timetable.php', $activePage);
             ?>
             <a href="logout.php" class="list-group-item list-group-item-action text-danger">Logout</a>
         </div>
