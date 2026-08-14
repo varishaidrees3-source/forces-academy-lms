@@ -6,7 +6,17 @@ if (!isset($_SESSION['student_id'])) {
 }
 require_once 'config/db.php';
 
-$notices_result = mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at DESC");
+$search = trim($_GET['search'] ?? '');
+
+if ($search !== '') {
+    $stmt = mysqli_prepare($conn, "SELECT * FROM notices WHERE title LIKE ? ORDER BY created_at DESC");
+    $like = '%' . $search . '%';
+    mysqli_stmt_bind_param($stmt, 's', $like);
+    mysqli_stmt_execute($stmt);
+    $notices_result = mysqli_stmt_get_result($stmt);
+} else {
+    $notices_result = mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at DESC");
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,6 +55,9 @@ $notices_result = mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at
         <a href="timetable.php" class="nav-link">
             <i class="bi bi-calendar-week"></i> Timetable
         </a>
+        <a href="fees.php" class="nav-link">
+            <i class="bi bi-cash-coin"></i> My Fees
+        </a>
         <a href="profile.php" class="nav-link">
             <i class="bi bi-person-circle"></i> My Profile
         </a>
@@ -66,10 +79,20 @@ $notices_result = mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at
     <div class="content-wrapper">
         <h4 class="fw-bold mb-4">Notice Board</h4>
 
+        <form method="GET" class="mb-4 d-flex" style="max-width:400px;">
+            <input type="text" name="search" class="form-control me-2"
+                   placeholder="Search notices by title..."
+                   value="<?php echo htmlspecialchars($search); ?>">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i></button>
+            <?php if ($search !== ''): ?>
+                <a href="notices.php" class="btn btn-outline-secondary ms-2">Clear</a>
+            <?php endif; ?>
+        </form>
+
         <?php if (mysqli_num_rows($notices_result) === 0): ?>
             <div class="text-center py-5">
                 <i class="bi bi-bell-slash fs-1 text-muted"></i>
-                <p class="mt-3 text-muted">No notices posted yet.</p>
+                <p class="mt-3 text-muted"><?php echo $search !== '' ? 'No notices match your search.' : 'No notices posted yet.'; ?></p>
             </div>
         <?php else: ?>
             <?php while($notice = mysqli_fetch_assoc($notices_result)): ?>

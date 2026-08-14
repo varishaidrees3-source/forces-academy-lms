@@ -65,6 +65,9 @@ if ($totalExams > 0) {
         <a href="timetable.php" class="nav-link">
             <i class="bi bi-calendar-week"></i> Timetable
         </a>
+        <a href="fees.php" class="nav-link">
+            <i class="bi bi-cash-coin"></i> My Fees
+        </a>
         <a href="profile.php" class="nav-link">
             <i class="bi bi-person-circle"></i> My Profile
         </a>
@@ -84,7 +87,12 @@ if ($totalExams > 0) {
     </nav>
 
     <div class="content-wrapper">
-        <h4 class="fw-bold mb-4">📊 My Results</h4>
+        <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+            <h4 class="fw-bold mb-0">📊 My Results</h4>
+            <button onclick="window.print()" class="btn btn-outline-primary btn-sm no-print">
+                <i class="bi bi-printer me-1"></i> Print Results
+            </button>
+        </div>
 
         <!-- Quick stats -->
         <div class="row g-3 mb-4">

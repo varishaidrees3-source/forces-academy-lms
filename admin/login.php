@@ -1,6 +1,9 @@
 <?php
-require_once '../config/db.php';
+// Session sabse pehle start karein
 session_start();
+
+// Dynamic path binding (Is se path mismatch nahi hota live server par)
+require_once __DIR__ . '/../config/db.php';
 
 $error = '';
 
@@ -13,21 +16,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $sql = "SELECT id, username, password FROM admins WHERE username = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, 's', $username);
-        mysqli_stmt_execute($stmt);
-        $result = mysqli_stmt_get_result($stmt);
-        $admin = mysqli_fetch_assoc($result);
-        mysqli_stmt_close($stmt);
+        
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 's', $username);
+            mysqli_stmt_execute($stmt);
+            $result = mysqli_stmt_get_result($stmt);
+            $admin = mysqli_fetch_assoc($result);
+            mysqli_stmt_close($stmt);
 
-        if ($admin && password_verify($password, $admin['password'])) {
-            // Separate session keys from student login — admin_id / admin_role
-            $_SESSION['admin_id']       = $admin['id'];
-            $_SESSION['admin_username'] = $admin['username'];
-            $_SESSION['admin_role']     = 'admin';
-            header('Location: dashboard.php');
-            exit;
+            if ($admin && password_verify($password, $admin['password'])) {
+                $_SESSION['admin_id']       = $admin['id'];
+                $_SESSION['admin_username'] = $admin['username'];
+                $_SESSION['admin_role']     = 'admin';
+                
+                header('Location: dashboard.php');
+                exit;
+            } else {
+                $error = 'Invalid username or password.';
+            }
         } else {
-            $error = 'Invalid username or password.';
+            $error = 'Database query failed.';
         }
     }
 }
@@ -36,6 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Admin Login</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
@@ -52,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
                     <?php endif; ?>
 
-                    <form method="POST" action="login.php">
+                    <form method="POST" action="">
                         <div class="mb-3">
                             <label class="form-label">Username</label>
                             <input type="text" name="username" class="form-control"

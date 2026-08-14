@@ -5,39 +5,28 @@ if (!isset($_SESSION['student_id'])) {
     exit;
 }
 require_once 'config/db.php';
+$student_id = $_SESSION['student_id'];
 
-// Get this student's class
-$stmt = mysqli_prepare($conn, "SELECT class FROM students WHERE id = ?");
-mysqli_stmt_bind_param($stmt, 'i', $_SESSION['student_id']);
+$stmt = mysqli_prepare($conn, "SELECT * FROM fees WHERE student_id = ? ORDER BY due_date ASC");
+mysqli_stmt_bind_param($stmt, 'i', $student_id);
 mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-$student = mysqli_fetch_assoc($res);
-$class = $student['class'] ?? '';
+$result = mysqli_stmt_get_result($stmt);
+$rows = mysqli_fetch_all($result, MYSQLI_ASSOC);
 
-// Pull all timetable rows for this class
-$stmt2 = mysqli_prepare($conn, "SELECT * FROM timetable WHERE class = ?");
-mysqli_stmt_bind_param($stmt2, 's', $class);
-mysqli_stmt_execute($stmt2);
-$rows = mysqli_stmt_get_result($stmt2);
-
-// Build a grid: [time_slot][day] = entry
-$days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
-$grid = [];
-$timeSlots = [];
-while ($r = mysqli_fetch_assoc($rows)) {
-    $grid[$r['time_slot']][$r['day']] = $r;
-    if (!in_array($r['time_slot'], $timeSlots)) {
-        $timeSlots[] = $r['time_slot'];
+// Total pending = pending + overdue (not yet paid)
+$totalPending = 0;
+foreach ($rows as $r) {
+    if ($r['status'] !== 'paid') {
+        $totalPending += $r['amount'];
     }
 }
-sort($timeSlots);
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Timetable — Forces Academy LMS</title>
+<title>My Fees — Forces Academy LMS</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
 <link href="css/style.css" rel="stylesheet">
@@ -66,10 +55,10 @@ sort($timeSlots);
         <a href="notices.php" class="nav-link">
             <i class="bi bi-bell"></i> Notices
         </a>
-        <a href="timetable.php" class="nav-link active">
+        <a href="timetable.php" class="nav-link">
             <i class="bi bi-calendar-week"></i> Timetable
         </a>
-        <a href="fees.php" class="nav-link">
+        <a href="fees.php" class="nav-link active">
             <i class="bi bi-cash-coin"></i> My Fees
         </a>
         <a href="profile.php" class="nav-link">
@@ -87,43 +76,50 @@ sort($timeSlots);
         <button class="btn" id="sidebarToggle">
             <i class="bi bi-list fs-4"></i>
         </button>
-        <span class="navbar-brand mb-0 h5">Timetable</span>
+        <span class="navbar-brand mb-0 h5">My Fees</span>
     </nav>
 
     <div class="content-wrapper">
-        <h4 class="fw-bold mb-1">🗓️ Weekly Timetable</h4>
-        <p class="text-muted mb-4">Class: <strong><?= htmlspecialchars($class) ?></strong></p>
+        <h4 class="fw-bold mb-4">💰 My Fees</h4>
 
-        <?php if (empty($timeSlots)): ?>
+        <!-- Total pending amount, prominent at top -->
+        <div class="course-card mb-4" style="background:linear-gradient(135deg,#ef4444,#f97316); color:#fff;">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                    <div class="small text-uppercase" style="opacity:.85;">Total Pending Amount</div>
+                    <div class="fw-bold" style="font-size:2rem;">Rs. <?= number_format($totalPending, 2) ?></div>
+                </div>
+                <i class="bi bi-exclamation-circle" style="font-size:2.5rem; opacity:.7;"></i>
+            </div>
+        </div>
+
+        <?php if (count($rows) === 0): ?>
             <div class="text-center py-5">
-                <i class="bi bi-calendar-x fs-1 text-muted"></i>
-                <p class="mt-3 text-muted">No timetable published yet for your class.</p>
+                <i class="bi bi-cash-stack fs-1 text-muted"></i>
+                <p class="mt-3 text-muted">No fee records yet.</p>
             </div>
         <?php else: ?>
         <div class="table-responsive" style="border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-            <table class="table table-bordered bg-white mb-0 text-center align-middle">
+            <table class="table table-striped table-hover align-middle bg-white mb-0">
                 <thead class="table-dark">
                     <tr>
-                        <th>Time</th>
-                        <?php foreach ($days as $d): ?>
-                            <th><?= $d ?></th>
-                        <?php endforeach; ?>
+                        <th>Description</th>
+                        <th>Amount</th>
+                        <th>Due Date</th>
+                        <th>Paid Date</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <?php foreach ($timeSlots as $slot): ?>
+                    <?php foreach ($rows as $f):
+                        $badge = $f['status'] === 'paid' ? 'success' : ($f['status'] === 'overdue' ? 'danger' : 'warning text-dark');
+                    ?>
                         <tr>
-                            <td class="fw-semibold table-light"><?= htmlspecialchars($slot) ?></td>
-                            <?php foreach ($days as $d): ?>
-                                <td>
-                                    <?php if (isset($grid[$slot][$d])): ?>
-                                        <div class="fw-semibold"><?= htmlspecialchars($grid[$slot][$d]['subject']) ?></div>
-                                        <small class="text-muted"><?= htmlspecialchars($grid[$slot][$d]['teacher']) ?></small>
-                                    <?php else: ?>
-                                        <span class="text-muted">—</span>
-                                    <?php endif; ?>
-                                </td>
-                            <?php endforeach; ?>
+                            <td class="fw-semibold"><?= htmlspecialchars($f['description']) ?></td>
+                            <td>Rs. <?= number_format($f['amount'], 2) ?></td>
+                            <td><?= date('d M Y', strtotime($f['due_date'])) ?></td>
+                            <td><?= $f['paid_date'] ? date('d M Y', strtotime($f['paid_date'])) : '—' ?></td>
+                            <td><span class="badge bg-<?= $badge ?>"><?= ucfirst($f['status']) ?></span></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

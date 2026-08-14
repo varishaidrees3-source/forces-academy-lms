@@ -66,6 +66,9 @@ $successMsg = isset($_GET['submitted']) ? true : false;
         <a href="timetable.php" class="nav-link">
             <i class="bi bi-calendar-week"></i> Timetable
         </a>
+        <a href="fees.php" class="nav-link">
+            <i class="bi bi-cash-coin"></i> My Fees
+        </a>
         <a href="profile.php" class="nav-link">
             <i class="bi bi-person-circle"></i> My Profile
         </a>

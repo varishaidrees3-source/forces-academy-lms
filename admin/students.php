@@ -5,10 +5,10 @@ require_once '../config/db.php';
 $search = trim($_GET['search'] ?? '');
 
 if ($search !== '') {
-    $sql = "SELECT * FROM students WHERE full_name LIKE ? OR roll_number LIKE ? ORDER BY created_at DESC";
+    $sql = "SELECT * FROM students WHERE full_name LIKE ? OR email LIKE ? OR roll_number LIKE ? ORDER BY created_at DESC";
     $stmt = mysqli_prepare($conn, $sql);
     $like = '%' . $search . '%';
-    mysqli_stmt_bind_param($stmt, 'ss', $like, $like);
+    mysqli_stmt_bind_param($stmt, 'sss', $like, $like, $like);
     mysqli_stmt_execute($stmt);
     $result = mysqli_stmt_get_result($stmt);
 } else {
@@ -24,13 +24,14 @@ $activePage = 'students';
 <meta charset="UTF-8">
 <title>Manage Students</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+<link href="../css/style.css" rel="stylesheet">
 </head>
-<body class="bg-light">
-<div class="container-fluid">
-<div class="row">
+<body class="dashboard-body">
     <?php include 'includes/sidebar.php'; ?>
 
-    <main class="col-md-9 col-lg-10 p-4">
+    <div class="main-content">
+    <div class="content-wrapper">
         <h2 class="mb-4">👩‍🎓 Manage Students</h2>
 
         <?php if ($deletedMsg): ?>
@@ -39,7 +40,7 @@ $activePage = 'students';
 
         <form method="GET" class="mb-3 d-flex" style="max-width:400px;">
             <input type="text" name="search" class="form-control me-2"
-                   placeholder="Search by name or roll number"
+                   placeholder="Search by name, email, or roll number"
                    value="<?= htmlspecialchars($search) ?>">
             <button type="submit" class="btn btn-primary">Search</button>
         </form>
@@ -83,9 +84,8 @@ $activePage = 'students';
                 </tbody>
             </table>
         </div>
-    </main>
-</div>
-</div>
+    </div>
+    </div>
 
 <!-- Shared delete confirmation modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1">
