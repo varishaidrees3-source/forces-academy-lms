@@ -39,13 +39,16 @@ $activePage = 'fees';
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manage Fees</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../css/style.css" rel="stylesheet">
 </head>
 <body class="dashboard-body">
     <?php include 'includes/sidebar.php'; ?>
 
     <div class="main-content">
+        <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
+            <button class="btn" id="sidebarToggle" type="button" aria-label="Toggle menu" aria-expanded="false">&#9776;</button>
+            <span class="navbar-brand mb-0 h5">Forces Academy Admin</span>
+        </nav>
     <div class="content-wrapper">
         <h2 class="mb-4">💰 Manage Fees</h2>
 
@@ -63,11 +66,11 @@ $activePage = 'fees';
                         <label class="form-label">Student</label>
                         <select name="student_id" class="form-select" required>
                             <option value="">Select student</option>
-                            <?php while ($s = mysqli_fetch_assoc($studentsResult)): ?>
+                            <?php if ($studentsResult): while ($s = mysqli_fetch_assoc($studentsResult)): ?>
                                 <option value="<?= $s['id'] ?>">
                                     <?= htmlspecialchars($s['full_name']) ?> (<?= htmlspecialchars($s['roll_number']) ?> — <?= htmlspecialchars($s['class']) ?>)
                                 </option>
-                            <?php endwhile; ?>
+                            <?php endwhile; endif; ?>
                         </select>
                     </div>
                     <div class="col-md-2">
@@ -103,7 +106,7 @@ $activePage = 'fees';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (mysqli_num_rows($fees) > 0): ?>
+                    <?php if ($fees && mysqli_num_rows($fees) > 0): ?>
                         <?php while ($f = mysqli_fetch_assoc($fees)):
                             $badge = $f['status'] === 'paid' ? 'success' : ($f['status'] === 'overdue' ? 'danger' : 'warning text-dark');
                         ?>
@@ -169,5 +172,6 @@ document.getElementById('deleteModal').addEventListener('show.bs.modal', functio
     document.getElementById('feeLabel').textContent = button.getAttribute('data-label');
 });
 </script>
+<script src="../js/main.js"></script>
 </body>
 </html>

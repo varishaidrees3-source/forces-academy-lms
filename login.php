@@ -1,6 +1,15 @@
 <?php
-require_once 'config/db.php';
-session_start();
+// Session sabse pehle start karein
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+// Config file location check (safe for subfolders & live server)
+$config_path = __DIR__ . '/config/db.php';
+if (!file_exists($config_path)) {
+    $config_path = __DIR__ . '/../config/db.php';
+}
+require_once $config_path;
 
 $error = '';
 
@@ -16,21 +25,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $sql  = "SELECT id, full_name, password FROM students WHERE email = ?";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, 's', $email);
-        mysqli_stmt_execute($stmt);
-        $result  = mysqli_stmt_get_result($stmt);
-        $student = mysqli_fetch_assoc($result);
-        mysqli_stmt_close($stmt);
+        
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 's', $email);
+            mysqli_stmt_execute($stmt);
+            $result  = mysqli_stmt_get_result($stmt);
+            $student = mysqli_fetch_assoc($result);
+            mysqli_stmt_close($stmt);
 
-        if ($student && password_verify($password, $student['password'])) {
-            $_SESSION['student_id']   = $student['id'];
-            $_SESSION['student_name'] = $student['full_name'];
-            header('Location: dashboard.php');
-            exit;
+            if ($student && password_verify($password, $student['password'])) {
+                $_SESSION['student_id']   = $student['id'];
+                $_SESSION['student_name'] = $student['full_name'];
+                header('Location: dashboard.php');
+                exit;
+            } else {
+                $error = 'Invalid email or password.';
+            }
         } else {
-            // Same message for "no such email" and "wrong password" —
-            // this avoids revealing which emails exist in the system.
-            $error = 'Invalid email or password.';
+            $error = 'Database query error: ' . mysqli_error($conn);
         }
     }
 }

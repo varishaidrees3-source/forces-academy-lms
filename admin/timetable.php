@@ -30,13 +30,16 @@ $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manage Timetable</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../css/style.css" rel="stylesheet">
 </head>
 <body class="dashboard-body">
     <?php include 'includes/sidebar.php'; ?>
 
     <div class="main-content">
+        <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
+            <button class="btn" id="sidebarToggle" type="button" aria-label="Toggle menu" aria-expanded="false">&#9776;</button>
+            <span class="navbar-brand mb-0 h5">Forces Academy Admin</span>
+        </nav>
     <div class="content-wrapper">
         <h2 class="mb-4">🗓️ Manage Timetable</h2>
 
@@ -95,7 +98,7 @@ $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (mysqli_num_rows($entries) > 0): ?>
+                    <?php if ($entries && mysqli_num_rows($entries) > 0): ?>
                         <?php while ($e = mysqli_fetch_assoc($entries)): ?>
                             <tr>
                                 <td><?= htmlspecialchars($e['class']) ?></td>
@@ -119,5 +122,6 @@ $days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
         </div>
     </div>
     </div>
+<script src="../js/main.js"></script>
 </body>
 </html>

@@ -1,22 +1,37 @@
 <?php
-session_start();
+// Safe Session Start
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['student_id'])) {
     header('Location: login.php');
     exit;
 }
-require_once 'config/db.php';
+
+// Config Path Check (Dynamic Loader)
+$config_path = __DIR__ . '/config/db.php';
+if (!file_exists($config_path)) {
+    $config_path = __DIR__ . '/../config/db.php';
+}
+require_once $config_path;
 
 $search = trim($_GET['search'] ?? '');
+$notices_result = false;
 
 if ($search !== '') {
     $stmt = mysqli_prepare($conn, "SELECT * FROM notices WHERE title LIKE ? ORDER BY created_at DESC");
-    $like = '%' . $search . '%';
-    mysqli_stmt_bind_param($stmt, 's', $like);
-    mysqli_stmt_execute($stmt);
-    $notices_result = mysqli_stmt_get_result($stmt);
+    if ($stmt) {
+        $like = '%' . $search . '%';
+        mysqli_stmt_bind_param($stmt, 's', $like);
+        mysqli_stmt_execute($stmt);
+        $notices_result = mysqli_stmt_get_result($stmt);
+    }
 } else {
-    $notices_result = mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at DESC");
+    $notices_result = @mysqli_query($conn, "SELECT * FROM notices ORDER BY created_at DESC");
 }
+
+$has_notices = $notices_result && mysqli_num_rows($notices_result) > 0;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -31,10 +46,11 @@ if ($search !== '') {
 <body class="dashboard-body">
 
 <!-- Sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        <i class="bi bi-mortarboard-fill"></i>
-        <span>Forces Academy</span>
+        <span class="sidebar-brand-label"><i class="bi bi-mortarboard-fill"></i> Forces Academy</span>
+        <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Close menu">&times;</button>
     </div>
     <nav class="sidebar-nav">
         <a href="dashboard.php" class="nav-link">
@@ -70,7 +86,7 @@ if ($search !== '') {
 <!-- Main Content -->
 <div class="main-content">
     <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
-        <button class="btn" id="sidebarToggle">
+        <button class="btn" id="sidebarToggle" aria-label="Toggle menu" aria-expanded="false">
             <i class="bi bi-list fs-4"></i>
         </button>
         <span class="navbar-brand mb-0 h5">Notices</span>
@@ -89,7 +105,7 @@ if ($search !== '') {
             <?php endif; ?>
         </form>
 
-        <?php if (mysqli_num_rows($notices_result) === 0): ?>
+        <?php if (!$has_notices): ?>
             <div class="text-center py-5">
                 <i class="bi bi-bell-slash fs-1 text-muted"></i>
                 <p class="mt-3 text-muted"><?php echo $search !== '' ? 'No notices match your search.' : 'No notices posted yet.'; ?></p>
@@ -98,14 +114,14 @@ if ($search !== '') {
             <?php while($notice = mysqli_fetch_assoc($notices_result)): ?>
             <div class="notice-card mb-3">
                 <div class="d-flex justify-content-between align-items-start mb-2">
-                    <h5 class="fw-bold mb-0"><?php echo htmlspecialchars($notice['title']); ?></h5>
+                    <h5 class="fw-bold mb-0"><?php echo htmlspecialchars($notice['title'] ?? ''); ?></h5>
                     <span class="badge bg-primary ms-2">New</span>
                 </div>
-                <p class="mb-2"><?php echo htmlspecialchars($notice['content']); ?></p>
+                <p class="mb-2"><?php echo htmlspecialchars($notice['content'] ?? ''); ?></p>
                 <small class="text-muted">
-                    <i class="bi bi-person me-1"></i><?php echo htmlspecialchars($notice['posted_by']); ?>
+                    <i class="bi bi-person me-1"></i><?php echo htmlspecialchars($notice['posted_by'] ?? 'Admin'); ?>
                     &nbsp;|&nbsp;
-                    <i class="bi bi-calendar me-1"></i><?php echo date('F d, Y', strtotime($notice['created_at'])); ?>
+                    <i class="bi bi-calendar me-1"></i><?php echo !empty($notice['created_at']) ? date('F d, Y', strtotime($notice['created_at'])) : date('F d, Y'); ?>
                 </small>
             </div>
             <?php endwhile; ?>
@@ -114,10 +130,6 @@ if ($search !== '') {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.getElementById('sidebarToggle').addEventListener('click', function() {
-    document.getElementById('sidebar').classList.toggle('show');
-});
-</script>
+<script src="js/main.js"></script>
 </body>
 </html>

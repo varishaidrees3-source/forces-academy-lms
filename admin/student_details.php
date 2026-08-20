@@ -33,15 +33,19 @@ $activePage = 'students';
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Student Details</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../css/style.css" rel="stylesheet">
 </head>
 <body class="dashboard-body">
     <?php include 'includes/sidebar.php'; ?>
 
     <div class="main-content">
+        <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
+            <button class="btn" id="sidebarToggle" type="button" aria-label="Toggle menu" aria-expanded="false">&#9776;</button>
+            <span class="navbar-brand mb-0 h5">Forces Academy Admin</span>
+        </nav>
     <div class="content-wrapper">
         <a href="students.php" class="btn btn-sm btn-outline-secondary mb-3">&larr; Back to Students</a>
         <h2 class="mb-4"><?= htmlspecialchars($student['full_name']) ?></h2>
@@ -56,10 +60,11 @@ $activePage = 'students';
         </div>
 
         <h5>Submissions</h5>
+        <div class="table-responsive">
         <table class="table table-bordered bg-white mb-4">
             <thead><tr><th>Assignment</th><th>Submitted At</th><th>Status</th></tr></thead>
             <tbody>
-                <?php if (mysqli_num_rows($submissions) > 0): ?>
+                <?php if ($submissions && mysqli_num_rows($submissions) > 0): ?>
                     <?php while ($sub = mysqli_fetch_assoc($submissions)): ?>
                         <tr>
                             <td><?= htmlspecialchars($sub['title']) ?></td>
@@ -72,12 +77,14 @@ $activePage = 'students';
                 <?php endif; ?>
             </tbody>
         </table>
+        </div>
 
         <h5>Results</h5>
+        <div class="table-responsive">
         <table class="table table-bordered bg-white">
             <thead><tr><th>Subject</th><th>Marks</th><th>Total</th><th>Grade</th><th>Exam Type</th></tr></thead>
             <tbody>
-                <?php if (mysqli_num_rows($results) > 0): ?>
+                <?php if ($results && mysqli_num_rows($results) > 0): ?>
                     <?php while ($r = mysqli_fetch_assoc($results)): ?>
                         <tr>
                             <td><?= htmlspecialchars($r['subject']) ?></td>
@@ -92,7 +99,9 @@ $activePage = 'students';
                 <?php endif; ?>
             </tbody>
         </table>
+        </div>
     </div>
     </div>
+<script src="../js/main.js"></script>
 </body>
 </html>

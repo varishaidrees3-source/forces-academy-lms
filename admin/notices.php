@@ -23,15 +23,19 @@ $activePage = 'notices';
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Post Notice</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../css/style.css" rel="stylesheet">
 </head>
 <body class="dashboard-body">
     <?php include 'includes/sidebar.php'; ?>
 
     <div class="main-content">
+        <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
+            <button class="btn" id="sidebarToggle" type="button" aria-label="Toggle menu" aria-expanded="false">&#9776;</button>
+            <span class="navbar-brand mb-0 h5">Forces Academy Admin</span>
+        </nav>
     <div class="content-wrapper">
         <h2 class="mb-4">📢 Post Notice</h2>
 
@@ -59,7 +63,7 @@ $activePage = 'notices';
         </div>
 
         <h5 class="mb-3">All Notices</h5>
-        <?php if (mysqli_num_rows($notices) > 0): ?>
+        <?php if ($notices && mysqli_num_rows($notices) > 0): ?>
             <?php while ($n = mysqli_fetch_assoc($notices)): ?>
                 <div class="alert alert-secondary d-flex justify-content-between align-items-start">
                     <div>
@@ -81,5 +85,6 @@ $activePage = 'notices';
         <?php endif; ?>
     </div>
     </div>
+<script src="../js/main.js"></script>
 </body>
 </html>

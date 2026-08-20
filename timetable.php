@@ -1,36 +1,67 @@
 <?php
-session_start();
+// Safe Session Start
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
 if (!isset($_SESSION['student_id'])) {
     header('Location: login.php');
     exit;
 }
-require_once 'config/db.php';
 
-// Get this student's class
+// Config Path Check (Dynamic Loader)
+$config_path = __DIR__ . '/config/db.php';
+if (!file_exists($config_path)) {
+    $config_path = __DIR__ . '/../config/db.php';
+}
+require_once $config_path;
+
+$student_id = $_SESSION['student_id'];
+$class = '';
+
+// Get this student's class safely
 $stmt = mysqli_prepare($conn, "SELECT class FROM students WHERE id = ?");
-mysqli_stmt_bind_param($stmt, 'i', $_SESSION['student_id']);
-mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-$student = mysqli_fetch_assoc($res);
-$class = $student['class'] ?? '';
+if ($stmt) {
+    mysqli_stmt_bind_param($stmt, 'i', $student_id);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    if ($res) {
+        $student = mysqli_fetch_assoc($res);
+        $class = $student['class'] ?? '';
+    }
+    mysqli_stmt_close($stmt);
+}
 
 // Pull all timetable rows for this class
-$stmt2 = mysqli_prepare($conn, "SELECT * FROM timetable WHERE class = ?");
-mysqli_stmt_bind_param($stmt2, 's', $class);
-mysqli_stmt_execute($stmt2);
-$rows = mysqli_stmt_get_result($stmt2);
-
-// Build a grid: [time_slot][day] = entry
-$days = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
 $grid = [];
 $timeSlots = [];
-while ($r = mysqli_fetch_assoc($rows)) {
-    $grid[$r['time_slot']][$r['day']] = $r;
-    if (!in_array($r['time_slot'], $timeSlots)) {
-        $timeSlots[] = $r['time_slot'];
+$days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+if ($class !== '') {
+    $stmt2 = mysqli_prepare($conn, "SELECT * FROM timetable WHERE class = ?");
+    if ($stmt2) {
+        mysqli_stmt_bind_param($stmt2, 's', $class);
+        mysqli_stmt_execute($stmt2);
+        $rows = mysqli_stmt_get_result($stmt2);
+        
+        if ($rows) {
+            while ($r = mysqli_fetch_assoc($rows)) {
+                $slot = $r['time_slot'] ?? '';
+                $day = $r['day'] ?? '';
+                if ($slot !== '' && $day !== '') {
+                    $grid[$slot][$day] = $r;
+                    if (!in_array($slot, $timeSlots)) {
+                        $timeSlots[] = $slot;
+                    }
+                }
+            }
+        }
+        mysqli_stmt_close($stmt2);
     }
 }
-sort($timeSlots);
+
+// Natural sort for proper chronological time slots ordering
+natsort($timeSlots);
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -45,10 +76,11 @@ sort($timeSlots);
 <body class="dashboard-body">
 
 <!-- Sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        <i class="bi bi-mortarboard-fill"></i>
-        <span>Forces Academy</span>
+        <span class="sidebar-brand-label"><i class="bi bi-mortarboard-fill"></i> Forces Academy</span>
+        <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Close menu">&times;</button>
     </div>
     <nav class="sidebar-nav">
         <a href="dashboard.php" class="nav-link">
@@ -84,7 +116,7 @@ sort($timeSlots);
 <!-- Main Content -->
 <div class="main-content">
     <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
-        <button class="btn" id="sidebarToggle">
+        <button class="btn" id="sidebarToggle" aria-label="Toggle menu" aria-expanded="false">
             <i class="bi bi-list fs-4"></i>
         </button>
         <span class="navbar-brand mb-0 h5">Timetable</span>
@@ -92,7 +124,7 @@ sort($timeSlots);
 
     <div class="content-wrapper">
         <h4 class="fw-bold mb-1">🗓️ Weekly Timetable</h4>
-        <p class="text-muted mb-4">Class: <strong><?= htmlspecialchars($class) ?></strong></p>
+        <p class="text-muted mb-4">Class: <strong><?= htmlspecialchars($class ?: 'Not Assigned') ?></strong></p>
 
         <?php if (empty($timeSlots)): ?>
             <div class="text-center py-5">
@@ -117,8 +149,8 @@ sort($timeSlots);
                             <?php foreach ($days as $d): ?>
                                 <td>
                                     <?php if (isset($grid[$slot][$d])): ?>
-                                        <div class="fw-semibold"><?= htmlspecialchars($grid[$slot][$d]['subject']) ?></div>
-                                        <small class="text-muted"><?= htmlspecialchars($grid[$slot][$d]['teacher']) ?></small>
+                                        <div class="fw-semibold"><?= htmlspecialchars($grid[$slot][$d]['subject'] ?? '') ?></div>
+                                        <small class="text-muted"><?= htmlspecialchars($grid[$slot][$d]['teacher'] ?? '') ?></small>
                                     <?php else: ?>
                                         <span class="text-muted">—</span>
                                     <?php endif; ?>
@@ -134,10 +166,6 @@ sort($timeSlots);
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.getElementById('sidebarToggle').addEventListener('click', function() {
-    document.getElementById('sidebar').classList.toggle('show');
-});
-</script>
+<script src="js/main.js"></script>
 </body>
 </html>

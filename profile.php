@@ -79,10 +79,11 @@ $student = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 <body class="dashboard-body">
 
 <!-- Sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        <i class="bi bi-mortarboard-fill"></i>
-        <span>Forces Academy</span>
+        <span class="sidebar-brand-label"><i class="bi bi-mortarboard-fill"></i> Forces Academy</span>
+        <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Close menu">&times;</button>
     </div>
     <nav class="sidebar-nav">
         <a href="dashboard.php" class="nav-link">
@@ -118,7 +119,7 @@ $student = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 <!-- Main Content -->
 <div class="main-content">
     <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
-        <button class="btn" id="sidebarToggle">
+        <button class="btn" id="sidebarToggle" aria-label="Toggle menu" aria-expanded="false">
             <i class="bi bi-list fs-4"></i>
         </button>
         <span class="navbar-brand mb-0 h5">My Profile</span>
@@ -203,10 +204,6 @@ $student = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.getElementById('sidebarToggle').addEventListener('click', function() {
-    document.getElementById('sidebar').classList.toggle('show');
-});
-</script>
+<script src="js/main.js"></script>
 </body>
 </html>

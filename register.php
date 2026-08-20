@@ -29,16 +29,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  (full_name, email, password, roll_number, class)
                  VALUES (?, ?, ?, ?, ?)";
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, 'sssss',
-            $full_name, $email, $hashed, $roll_number, $class);
 
-        if (mysqli_stmt_execute($stmt)) {
-            header('Location: login.php?registered=1');
-            exit;
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'sssss',
+                $full_name, $email, $hashed, $roll_number, $class);
+
+            if (mysqli_stmt_execute($stmt)) {
+                header('Location: login.php?registered=1');
+                exit;
+            } else {
+                $error = 'Registration failed. Email or roll number may already be in use.';
+            }
+            mysqli_stmt_close($stmt);
         } else {
-            $error = 'Registration failed. Email or roll number may already be in use.';
+            $error = 'Database error, please try again later.';
         }
-        mysqli_stmt_close($stmt);
     }
 }
 ?>

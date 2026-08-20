@@ -1,28 +1,47 @@
 <?php
-session_start();
-require 'config/db.php';
+// Safe Session Start
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 if (!isset($_SESSION['student_id'])) {
     header('Location: login.php');
     exit;
 }
+
+// Config Path Check (Dynamic Loader)
+$config_path = __DIR__ . '/config/db.php';
+if (!file_exists($config_path)) {
+    $config_path = __DIR__ . '/../config/db.php';
+}
+require_once $config_path;
+
 $student_id = $_SESSION['student_id'];
+$rows = [];
 
-// Only pull results for the logged-in student
+// Prepared Statement
 $stmt = $conn->prepare("SELECT * FROM results WHERE student_id = ?");
-$stmt->bind_param("i", $student_id);
-$stmt->execute();
-$results = $stmt->get_result();
+if ($stmt) {
+    $stmt->bind_param("i", $student_id);
+    if ($stmt->execute()) {
+        $results = $stmt->get_result();
+        if ($results) {
+            $rows = $results->fetch_all(MYSQLI_ASSOC);
+        }
+    }
+    $stmt->close();
+}
 
-// Pull rows into an array once so we can also compute quick stats
-$rows = $results->fetch_all(MYSQLI_ASSOC);
 $totalExams = count($rows);
 $avgPercent = 0;
+
 if ($totalExams > 0) {
     $sumPercent = 0;
     foreach ($rows as $r) {
-        if ($r['total_marks'] > 0) {
-            $sumPercent += ($r['marks'] / $r['total_marks']) * 100;
+        $totalMarks = (float)($r['total_marks'] ?? 0);
+        $obtainedMarks = (float)($r['marks'] ?? 0);
+        if ($totalMarks > 0) {
+            $sumPercent += ($obtainedMarks / $totalMarks) * 100;
         }
     }
     $avgPercent = round($sumPercent / $totalExams, 1);
@@ -41,10 +60,11 @@ if ($totalExams > 0) {
 <body class="dashboard-body">
 
 <!-- Sidebar -->
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 <div class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-        <i class="bi bi-mortarboard-fill"></i>
-        <span>Forces Academy</span>
+        <span class="sidebar-brand-label"><i class="bi bi-mortarboard-fill"></i> Forces Academy</span>
+        <button type="button" class="sidebar-close" id="sidebarClose" aria-label="Close menu">&times;</button>
     </div>
     <nav class="sidebar-nav">
         <a href="dashboard.php" class="nav-link">
@@ -80,7 +100,7 @@ if ($totalExams > 0) {
 <!-- Main Content -->
 <div class="main-content">
     <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
-        <button class="btn" id="sidebarToggle">
+        <button class="btn" id="sidebarToggle" aria-label="Toggle menu" aria-expanded="false">
             <i class="bi bi-list fs-4"></i>
         </button>
         <span class="navbar-brand mb-0 h5">My Results</span>
@@ -136,19 +156,23 @@ if ($totalExams > 0) {
                 </thead>
                 <tbody>
                     <?php foreach ($rows as $row):
-                        $pct = $row['total_marks'] > 0 ? round(($row['marks'] / $row['total_marks']) * 100, 1) : 0;
+                        $tMarks = (float)($row['total_marks'] ?? 0);
+                        $oMarks = (float)($row['marks'] ?? 0);
+                        $pct = $tMarks > 0 ? round(($oMarks / $tMarks) * 100, 1) : 0;
+                        $grade = strtoupper($row['grade'] ?? 'N/A');
+                        $badgeClass = ($grade === 'A+' || $grade === 'A') ? 'success' : ($grade === 'F' ? 'danger' : 'warning text-dark');
                     ?>
                         <tr>
-                            <td class="fw-semibold"><?= htmlspecialchars($row['subject']) ?></td>
-                            <td><?= htmlspecialchars($row['marks']) ?></td>
-                            <td><?= htmlspecialchars($row['total_marks']) ?></td>
+                            <td class="fw-semibold"><?= htmlspecialchars($row['subject'] ?? '') ?></td>
+                            <td><?= htmlspecialchars($row['marks'] ?? '0') ?></td>
+                            <td><?= htmlspecialchars($row['total_marks'] ?? '0') ?></td>
                             <td><?= $pct ?>%</td>
                             <td>
-                                <span class="badge bg-<?= $row['grade'] === 'A+' || $row['grade'] === 'A' ? 'success' : ($row['grade'] === 'F' ? 'danger' : 'warning text-dark') ?>">
-                                    <?= htmlspecialchars($row['grade']) ?>
+                                <span class="badge bg-<?= $badgeClass ?>">
+                                    <?= htmlspecialchars($grade) ?>
                                 </span>
                             </td>
-                            <td><?= htmlspecialchars($row['exam_type']) ?></td>
+                            <td><?= htmlspecialchars($row['exam_type'] ?? 'Regular') ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -159,10 +183,6 @@ if ($totalExams > 0) {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-document.getElementById('sidebarToggle').addEventListener('click', function() {
-    document.getElementById('sidebar').classList.toggle('show');
-});
-</script>
+<script src="js/main.js"></script>
 </body>
 </html>

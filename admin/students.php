@@ -22,15 +22,19 @@ $activePage = 'students';
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manage Students</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../css/style.css" rel="stylesheet">
 </head>
 <body class="dashboard-body">
     <?php include 'includes/sidebar.php'; ?>
 
     <div class="main-content">
+        <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
+            <button class="btn" id="sidebarToggle" type="button" aria-label="Toggle menu" aria-expanded="false">&#9776;</button>
+            <span class="navbar-brand mb-0 h5">Forces Academy Admin</span>
+        </nav>
     <div class="content-wrapper">
         <h2 class="mb-4">👩‍🎓 Manage Students</h2>
 
@@ -58,7 +62,7 @@ $activePage = 'students';
                     </tr>
                 </thead>
                 <tbody>
-                    <?php if (mysqli_num_rows($result) > 0): ?>
+                    <?php if ($result && mysqli_num_rows($result) > 0): ?>
                         <?php while ($s = mysqli_fetch_assoc($result)): ?>
                             <tr>
                                 <td><?= htmlspecialchars($s['full_name']) ?></td>
@@ -117,5 +121,6 @@ document.getElementById('deleteModal').addEventListener('show.bs.modal', functio
     document.getElementById('studentNameLabel').textContent = button.getAttribute('data-name');
 });
 </script>
+<script src="../js/main.js"></script>
 </body>
 </html>

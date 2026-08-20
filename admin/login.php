@@ -1,9 +1,16 @@
 <?php
-// Session sabse pehle start karein
-session_start();
+// PHP session
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-// Dynamic path binding (Is se path mismatch nahi hota live server par)
-require_once __DIR__ . '/../config/db.php';
+// Config file location check
+$config_path = __DIR__ . '/../config/db.php';
+if (!file_exists($config_path)) {
+    // Alternate path agar login.php main root me ho
+    $config_path = __DIR__ . '/config/db.php';
+}
+require_once $config_path;
 
 $error = '';
 
@@ -35,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $error = 'Invalid username or password.';
             }
         } else {
-            $error = 'Database query failed.';
+            $error = 'Database query failed: ' . mysqli_error($conn);
         }
     }
 }

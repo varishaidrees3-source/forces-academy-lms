@@ -1,56 +1,101 @@
-# Week 4 — Complete Admin Panel Setup
+# Forces Academy LMS
 
-## Files (put all inside your project's `admin/` folder)
-- `login.php`, `logout.php`, `dashboard.php`
-- `students.php`, `delete_student.php`, `student_details.php`
-- `courses.php`, `delete_course.php`
-- `notices.php`, `delete_notice.php`
-- `results.php`
-- `assignments.php` (bonus — not explicitly detailed in the handout, but sidebar lists it, so added for completeness)
-- `create_admin.php` — **one-time use, delete after creating your admin login**
-- `includes/admin_auth.php`, `includes/sidebar.php`
+A full-stack Learning Management System built for Forces Academy Faisalabad — students can log in, view courses, check their timetable, submit assignments, track fees and results, while admins manage the entire academy from a dedicated admin panel.
 
-## Setup Steps
+**🔗 Live Site:** [forces-academy.infy.click](https://forces-academy.infy.click/)
+**📦 Repository:** [github.com/varishaidrees3-source/forces-academy-lms](https://github.com/varishaidrees3-source/forces-academy-lms)
 
-### 1. Copy files
-Copy the entire `admin/` folder into `C:\xampp\htdocs\forces-academy-lms\` — so the structure is:
-```
-forces-academy-lms/
-  admin/
-    login.php, dashboard.php, ... (all the files above)
-    includes/
-      admin_auth.php
-      sidebar.php
-  config/
-    db.php   (already exists from Week 1)
-```
+---
 
-### 2. Create your first admin account
-1. In browser, go to: `http://localhost/forces-academy-lms/admin/create_admin.php`
-2. Fill in a username, email, password — submit
-3. **Delete `create_admin.php` immediately after** (it inserts a plain-text password into a form, not safe to leave live)
+## 📸 Screenshots
 
-### 3. Test the admin login
-1. Go to: `http://localhost/forces-academy-lms/admin/login.php`
-2. Log in with the username/password you just created
-3. You should land on `dashboard.php` showing 4 stat cards (Students, Courses, Assignments, Notices)
+| Login | Student Dashboard |
+|---|---|
+| ![Login](screenshots/Picture1.png) | ![Student Dashboard](screenshots/Picture2.png) |
 
-### 4. Test each feature
-- **Manage Students**: search by name/roll, view a student's details, delete with confirmation popup
-- **Manage Courses**: add a course, edit it (pre-fills the form), delete with confirmation
-- **Manage Assignments**: add one, delete one
-- **Upload Results**: pick a student + course from dropdowns, fill marks/grade, submit — check it appears in "Recently Uploaded"
-- **Post Notice**: post one, confirm it shows on top of the list, delete it
+| Notices & Fees | Admin Dashboard |
+|---|---|
+| ![Notices and Fees](screenshots/Picture3.png) | ![Admin Dashboard](screenshots/Picture4.png) |
 
-### 5. Confirm session separation
-- Log in as a student in one tab and as admin in another — they should not interfere, since student uses `$_SESSION['student_id']` and admin uses `$_SESSION['admin_id']` / `$_SESSION['admin_role']`.
-- Try opening any `admin/*.php` page directly without an admin session — it must redirect to `admin/login.php`.
+| Manage Students (Admin) |
+|---|
+| ![Manage Students](screenshots/Picture5.png) |
 
-## Submission Checklist (Friday July 24)
-- GitHub repo link
-- Screenshots: admin dashboard with stats, student management table, add course form, post notice form, upload results form
+---
 
-## Common issues
-- **"Call to member function on bool"** → check `config/db.php` path is correct relative to `admin/` folder (should be `../config/db.php`)
-- **Admin login always fails** → make sure you created an admin via `create_admin.php` first; passwords must be hashed
-- **Dropdowns empty in Upload Results** → make sure `students` and `courses` tables have data
+## 🛠️ Tech Stack
+
+- **Backend:** PHP (procedural, `mysqli` with prepared statements)
+- **Database:** MySQL
+- **Frontend:** HTML, CSS, JavaScript, [Bootstrap 5.3.3](https://getbootstrap.com/), Bootstrap Icons
+- **Hosting:** InfinityFree (live PHP + MySQL hosting)
+- **Auth:** Session-based authentication with separate student and admin sessions
+
+---
+
+## ✨ Features
+
+### Student Portal
+- Register and log in securely (hashed passwords)
+- Personal dashboard with enrolled course count and latest notices
+- Browse courses and view class timetable
+- Submit assignments online
+- View results and track fee status
+- Edit personal profile
+
+### Admin Panel
+- Secure admin login, fully separated from student sessions
+- Dashboard with live stats (Students, Courses, Assignments, Notices)
+- Manage students — search, view details, delete
+- Manage courses — add, edit, delete
+- Manage assignments — add, delete
+- Upload and manage student results
+- Post and delete notices
+- Manage timetable entries
+- Track and update fee status
+- Route protection — direct access to any admin page without a session redirects to login
+
+---
+
+## 💻 How to Run Locally
+
+1. **Install XAMPP** (or any local server with PHP 8.1+ and MySQL) — [download here](https://www.apachefriends.org/)
+2. **Clone the repo** into your `htdocs` folder:
+   ```bash
+   cd C:\xampp\htdocs
+   git clone https://github.com/varishaidrees3-source/forces-academy-lms.git
+   ```
+3. **Create the database** — open phpMyAdmin, create a database (e.g. `forces_lms`), and import the schema (see `/database` if included, or set up the tables: `students`, `admins`, `courses`, `notices`, `assignments`, `results`, `fees`, `timetable`).
+4. **Configure the database connection** — create `config/db.php` (this file is git-ignored for security) with:
+   ```php
+   <?php
+   mysqli_report(MYSQLI_REPORT_OFF);
+   $host = 'localhost';
+   $user = 'root';
+   $password = '';
+   $database = 'forces_lms';
+   $conn = mysqli_connect($host, $user, $password, $database);
+   if (!$conn) { die('Database connection failed: ' . mysqli_connect_error()); }
+   mysqli_set_charset($conn, 'utf8mb4');
+   ?>
+   ```
+5. **Create your first admin account** by visiting `admin/create_admin.php` once, then **delete that file** immediately after (it's not safe to leave live).
+6. **Start Apache and MySQL** in XAMPP, then visit:
+   ```
+   http://localhost/forces-academy-lms/
+   ```
+
+---
+
+## 🔒 Security Notes
+
+- Passwords are hashed with `password_hash()` / verified with `password_verify()`
+- All database queries use prepared statements to prevent SQL injection
+- `config/db.php` and `admin/create_admin.php` are excluded from version control via `.gitignore`
+- Student and admin sessions are fully isolated (`$_SESSION['student_id']` vs `$_SESSION['admin_id']`)
+
+---
+
+## Built by
+
+**Varisha Idrees** | Code Saviours SI-26 | 2026

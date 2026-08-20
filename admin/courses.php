@@ -49,15 +49,19 @@ $activePage = 'courses';
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Manage Courses</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
 <link href="../css/style.css" rel="stylesheet">
 </head>
 <body class="dashboard-body">
     <?php include 'includes/sidebar.php'; ?>
 
     <div class="main-content">
+        <nav class="navbar navbar-light bg-white border-bottom d-lg-none px-3">
+            <button class="btn" id="sidebarToggle" type="button" aria-label="Toggle menu" aria-expanded="false">&#9776;</button>
+            <span class="navbar-brand mb-0 h5">Forces Academy Admin</span>
+        </nav>
     <div class="content-wrapper">
         <h2 class="mb-4">📚 Manage Courses</h2>
 
@@ -104,7 +108,7 @@ $activePage = 'courses';
                     <tr><th>Course Name</th><th>Description</th><th>Teacher</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
-                    <?php if (mysqli_num_rows($courses) > 0): ?>
+                    <?php if ($courses && mysqli_num_rows($courses) > 0): ?>
                         <?php while ($c = mysqli_fetch_assoc($courses)): ?>
                             <tr>
                                 <td><?= htmlspecialchars($c['course_name']) ?></td>
@@ -158,5 +162,6 @@ document.getElementById('deleteCourseModal').addEventListener('show.bs.modal', f
     document.getElementById('courseNameLabel').textContent = button.getAttribute('data-name');
 });
 </script>
+<script src="../js/main.js"></script>
 </body>
 </html>
